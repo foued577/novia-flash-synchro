@@ -1,0 +1,180 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Typographies (SIL Open Font License) — embarquées pour fonctionner hors ligne
+   Montserrat : typographie de marque (titres, chiffres, diapositives)
+   Source Sans 3 : texte courant, formulaires et tableaux
+--------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('./assets/fonts/montserrat-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Montserrat';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('./assets/fonts/montserrat-latin-ext-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Source Sans 3';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 900;
+  src: url('./assets/fonts/source-sans-3-latin-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Source Sans 3';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 900;
+  src: url('./assets/fonts/source-sans-3-latin-ext-wght-normal.woff2') format('woff2-variations');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Source Sans 3';
+  font-style: italic;
+  font-display: swap;
+  font-weight: 200 900;
+  src: url('./assets/fonts/source-sans-3-latin-wght-italic.woff2') format('woff2-variations');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+2000-206F, U+20AC;
+}
+
+/* ---------------------------------------------------------------------------
+   Jetons de design NOVIA
+--------------------------------------------------------------------------- */
+@theme {
+  --font-sans: 'Source Sans 3', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Montserrat', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Bleu NOVIA (titres de la présentation historique : #3661B3) */
+  --color-novia-50: #eef3fb;
+  --color-novia-100: #dce6f6;
+  --color-novia-200: #b9cdec;
+  --color-novia-300: #8eaede;
+  --color-novia-400: #5f88cb;
+  --color-novia-500: #4570be;
+  --color-novia-600: #3661b3;
+  --color-novia-700: #2c4f95;
+  --color-novia-800: #233f76;
+  --color-novia-900: #1b3159;
+  --color-novia-950: #0f1c3a;
+  /* Cyan du logo */
+  --color-cyan-novia: #229cd7;
+
+  /* Encres et surfaces (gris bleutés) */
+  --color-ink: #1c2638;
+  --color-ink-2: #4a5568;
+  --color-ink-3: #77839a;
+  --color-canvas: #f3f5f9;
+  --color-line: #e2e7ef;
+  --color-line-strong: #cfd7e3;
+
+  --radius-panel: 14px;
+  --shadow-panel: 0 1px 2px rgb(15 28 58 / 0.04), 0 1px 1px rgb(15 28 58 / 0.03);
+  --shadow-float: 0 12px 32px -8px rgb(15 28 58 / 0.18), 0 2px 6px rgb(15 28 58 / 0.06);
+
+  --animate-fade-in: fade-in 0.18s ease-out;
+  --animate-pop-in: pop-in 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  --animate-pulse-soft: pulse-soft 1.4s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-canvas font-sans text-[15px] leading-relaxed text-ink;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-ink;
+    letter-spacing: -0.01em;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-novia-500);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: var(--color-novia-100);
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  input[type='number']::-webkit-inner-spin-button {
+    opacity: 0.4;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-[var(--radius-panel)] border border-line bg-white shadow-[var(--shadow-panel)];
+  }
+  .field {
+    @apply block w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-[15px] text-ink placeholder:text-ink-3 transition-colors focus:border-novia-500 focus:ring-2 focus:ring-novia-100 focus:outline-none disabled:bg-canvas disabled:text-ink-2;
+  }
+  .field-sm {
+    @apply rounded-md px-2 py-1 text-sm;
+  }
+  .label {
+    @apply mb-1 block text-[13px] font-semibold text-ink-2;
+  }
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
