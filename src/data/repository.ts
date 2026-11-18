@@ -29,6 +29,12 @@ export interface DataRepository {
   getCurrentUser(): Promise<AppUser | null>
   signInWithPassword(email: string, password: string): Promise<AppUser>
   sendMagicLink(email: string): Promise<void>
+  /** Envoie un e-mail de réinitialisation du mot de passe. */
+  requestPasswordReset(email: string): Promise<void>
+  /** Définit le mot de passe de l'utilisateur connecté. */
+  updatePassword(password: string): Promise<void>
+  /** Vrai si l'utilisateur arrive d'un lien d'invitation ou de réinitialisation. */
+  consumePasswordSetupRequest(): boolean
   signInAsDemoUser(userId: string): Promise<AppUser>
   signOut(): Promise<void>
 

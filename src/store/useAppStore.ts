@@ -49,6 +49,11 @@ interface AppState {
   signInWithPassword(email: string, password: string): Promise<void>
   sendMagicLink(email: string): Promise<void>
   signOut(): Promise<void>
+  /** Ouvre la fenêtre « Définir mon mot de passe » (invitation, réinitialisation, changement). */
+  passwordDialog: 'setup' | 'change' | null
+  setPasswordDialog(mode: 'setup' | 'change' | null): void
+  requestPasswordReset(email: string): Promise<void>
+  updatePassword(password: string): Promise<void>
 
   createMeeting(opts: { week: IsoWeekRef; reviewWeeks: number; meetingDate?: string; meetingTime?: string; sourceId: string | null }): Promise<string>
   updateMeeting(id: string, patch: Partial<Meeting>): Promise<void>
@@ -135,6 +140,7 @@ export const useAppStore = create<AppState>((set, get) => {
   return {
     status: 'idle',
     error: null,
+    passwordDialog: null,
     user: null,
     snapshot: null,
     bundles: {},
@@ -148,7 +154,7 @@ export const useAppStore = create<AppState>((set, get) => {
       set({ status: 'loading', error: null })
       try {
         const [user, snapshot] = await Promise.all([repo().getCurrentUser(), repo().loadSnapshot().catch(() => null)])
-        set({ user, snapshot, status: 'ready' })
+        set({ user, snapshot, status: 'ready', passwordDialog: user && repo().consumePasswordSetupRequest() ? 'setup' : null })
         if (user && !snapshot) await get().refresh()
         if (user) await autoCreate().catch(() => undefined)
         // Synchronisation : autres onglets (démo) ou temps réel (Supabase).
@@ -221,6 +227,19 @@ export const useAppStore = create<AppState>((set, get) => {
 
     async sendMagicLink(email) {
       await repo().sendMagicLink(email)
+    },
+
+    setPasswordDialog(mode) {
+      set({ passwordDialog: mode })
+    },
+
+    async requestPasswordReset(email) {
+      await repo().requestPasswordReset(email)
+    },
+
+    async updatePassword(password) {
+      await repo().updatePassword(password)
+      set({ passwordDialog: null })
     },
 
     async signOut() {

@@ -1,7 +1,7 @@
 {
   "name": "novia-flash-synchro",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,8 @@
     "test": "vitest run",
     "lint": "oxlint",
     "db:seed": "node scripts/generate-seed.mjs",
-    "test:db": "node scripts/test-database.mjs"
+    "test:db": "node scripts/test-database.mjs",
+    "build:artifact": "tsc -b && vite build --mode artifact"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.0",

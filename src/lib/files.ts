@@ -58,17 +58,6 @@ export async function imageToPngDataUrl(src: string, maxSize = 1600): Promise<{ 
   return { data: canvas.toDataURL('image/png'), width: canvas.width, height: canvas.height }
 }
 
-export function downloadBlob(blob: Blob, fileName: string) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = fileName
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 2000)
-}
-
 export function slugify(input: string): string {
   return input
     .normalize('NFD')

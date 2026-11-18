@@ -12,12 +12,12 @@ Chaque service saisit ses informations dans son espace, la direction valide, et 
 
 1. [Fonctionnalités](#fonctionnalités)
 2. [Démarrage rapide](#démarrage-rapide)
-3. [Démo autonome (sans installation)](#démo-autonome-sans-installation)
+3. [Démo autonome (sans installation)](#démo-autonome-sans-installation) et [hébergement gratuit](#hébergement-gratuit-sur-claudeai)
 4. [Calcul des semaines](#calcul-des-semaines)
 5. [Rôles et circuit de validation](#rôles-et-circuit-de-validation)
 6. [Mode présentation et chronomètre](#mode-présentation-et-chronomètre)
 7. [Connexion à Supabase](#connexion-à-supabase)
-8. [Déploiement](#déploiement)
+8. [Déploiement](#déploiement) et [passage en production sur Cloudflare Pages](#passage-en-production-sur-cloudflare-pages)
 9. [Architecture](#architecture)
 10. [Tests](#tests)
 
@@ -74,6 +74,20 @@ npm run build:demo
 ```
 
 Produit `dist-standalone/index.html` : un **fichier unique** (polices, logo et bibliothèques inclus) qui s’ouvre par double-clic dans Chrome, Edge ou Firefox, sans connexion internet. Idéal pour une présentation à la direction.
+
+---
+
+## Hébergement gratuit sur claude.ai
+
+```bash
+npm run build:artifact
+```
+
+Produit `dist-artifact/index.html`, publié comme page hébergée sur claude.ai (privée par défaut ; bouton **Partager** pour l’ouvrir à votre organisation ou par lien). Particularités de cette version :
+
+- les exports PDF et PowerPoint passent par la capacité de téléchargement de la page (le visiteur confirme chaque fichier) ;
+- l’adresse de la page ne change pas pendant la navigation (routage interne) ;
+- en mode démonstration, les données restent **dans le navigateur de chaque visiteur** : pour un usage d’équipe avec des données communes, connectez Supabase (ci-dessous).
 
 ---
 
@@ -171,8 +185,30 @@ L’application est un site statique : `npm run build` produit le dossier `dist/
 - **Vercel** : importez le dépôt ; `vercel.json` est fourni. Ajoutez les variables `VITE_*` dans *Settings → Environment Variables*.
 - **Netlify** : `netlify.toml` est fourni (build `npm run build`, dossier `dist`, réécriture vers `index.html`).
 - **Autre hébergeur / serveur interne** : servez `dist/` et redirigez toutes les routes vers `index.html` (fichier `public/_redirects` fourni). Sans possibilité de réécriture, construisez avec `VITE_ROUTER=hash`.
+- **Cloudflare Pages** : voir ci-dessous.
+- **claude.ai** : voir [Hébergement gratuit sur claude.ai](#hébergement-gratuit-sur-claudeai).
 
-Les variables `VITE_*` sont intégrées au moment du build : relancez un build après les avoir modifiées.
+Les variables `VITE_*` sont intégrées au moment du build : relancez un build après les avoir modifiées. Garde-fou : si `VITE_DATA_MODE=supabase` est défini sans URL ou clé valide, **le build échoue** au lieu de publier la démonstration.
+
+### Passage en production sur Cloudflare Pages
+
+1. **Variables d’environnement** — *Workers & Pages → novia-flash-synchro → Settings → Variables and Secrets*, pour **Production** (et Preview si utilisé) :
+
+   | Variable | Valeur |
+   |---|---|
+   | `VITE_DATA_MODE` | `supabase` |
+   | `VITE_SUPABASE_URL` | `https://<ref-projet>.supabase.co` |
+   | `VITE_SUPABASE_ANON_KEY` | clé *anon public* / *publishable* (Supabase → Project Settings → API Keys) |
+
+   Jamais la clé `service_role` / *secret* : elle donnerait tous les droits à n’importe quel visiteur.
+2. **Build** — commande `npm run build`, dossier `dist`, variable `NODE_VERSION=22` si la version de Node est trop ancienne. Le fichier `public/_redirects` gère les URL de l’application.
+3. **Redéployer** — *Deployments → … → Retry deployment* (les variables ne s’appliquent qu’aux nouveaux builds).
+4. **Supabase → Authentication → URL Configuration** — *Site URL* : l’adresse publique (ex. `https://novia-flash-synchro.pages.dev`) ; *Redirect URLs* : la même suivie de `/**`. Sans cela, les liens d’invitation et de réinitialisation renvoient vers `localhost`.
+5. **Supabase → Authentication → Sign In / Providers** — e-mail activé, *Allow new users to sign up* **désactivé**.
+6. **Comptes** — *Authentication → Users → Invite user* : invitez d’abord l’administrateur (le premier compte devient administrateur). Chaque personne clique le lien reçu, arrive connectée dans l’application et choisit son mot de passe. Ensuite : *Paramètres → Utilisateurs et rôles* dans l’application.
+7. **Données de démonstration** — si `demo-data.sql` a été exécuté, lancez `supabase/reset-demo-data.sql` avant la mise en service.
+
+Dans l’application : *Mot de passe oublié ?* sur l’écran de connexion, *Changer mon mot de passe* dans le menu du compte (en bas de la barre latérale).
 
 ---
 
@@ -228,4 +264,3 @@ npm run typecheck # vérification TypeScript
 - **Jour / heure de réunion, date limite de saisie, alerte du chronomètre, accroche de couverture** : *Paramètres → Réunion et chronomètre*.
 
 Logo et polices : `src/assets/` (Montserrat et Source Sans 3 sous licence SIL Open Font License).
-"# novia-flash-synchro" 

@@ -14,14 +14,12 @@ export async function runExport(meetingId: string, kind: 'pdf' | 'pptx') {
   const id = toast.loading(`Préparation de l’export ${label}…`)
   try {
     const progress = (done: number, total: number) => toast.loading(`Export ${label} : diapositive ${done} sur ${total}`, { id })
-    if (kind === 'pdf') {
-      const { exportDeckToPdf } = await import('@/lib/export/exportPdf')
-      await exportDeckToPdf(data, progress)
-    } else {
-      const { exportDeckToPptx } = await import('@/lib/export/exportPptx')
-      await exportDeckToPptx(data, progress)
-    }
-    toast.success(`Export ${label} téléchargé`, { id })
+    const outcome =
+      kind === 'pdf'
+        ? await (await import('@/lib/export/exportPdf')).exportDeckToPdf(data, progress)
+        : await (await import('@/lib/export/exportPptx')).exportDeckToPptx(data, progress)
+    if (outcome === 'declined') toast.info('Téléchargement annulé', { id })
+    else toast.success(`Export ${label} téléchargé`, { id })
   } catch (error) {
     console.error(error)
     toast.error(`L’export ${label} a échoué : ${error instanceof Error ? error.message : 'erreur inconnue'}`, { id })

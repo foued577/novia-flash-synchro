@@ -12,5 +12,5 @@ export const env = {
   supabaseRequestedButMissing: requestedMode === 'supabase' && !supabaseConfigured,
   supabaseUrl: url,
   supabaseAnonKey: anonKey,
-  router: ((import.meta.env.VITE_ROUTER as string | undefined) === 'hash' ? 'hash' : 'browser') as 'hash' | 'browser',
+  router: (['hash', 'memory'].includes(import.meta.env.VITE_ROUTER as string) ? import.meta.env.VITE_ROUTER : 'browser') as 'hash' | 'browser' | 'memory',
 }

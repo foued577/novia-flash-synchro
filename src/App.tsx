@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
-import { createBrowserRouter, createHashRouter, Navigate, RouterProvider, useLocation } from 'react-router-dom'
+import { createBrowserRouter, createHashRouter, createMemoryRouter, Navigate, RouterProvider, useLocation } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { AppShell } from '@/components/layout/AppShell'
 import { Splash } from '@/components/layout/Splash'
@@ -81,7 +81,8 @@ const routes = [
   },
 ]
 
-const router = env.router === 'hash' ? createHashRouter(routes) : createBrowserRouter(routes)
+// « memory » : page hébergée dans un cadre sécurisé (claude.ai), l'adresse ne change pas.
+const router = env.router === 'memory' ? createMemoryRouter(routes) : env.router === 'hash' ? createHashRouter(routes) : createBrowserRouter(routes)
 
 export function App() {
   const init = useAppStore((s) => s.init)

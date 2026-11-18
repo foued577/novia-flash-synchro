@@ -11,6 +11,7 @@ import { SEVERITY } from '@/domain/status'
 import type { Block, Service, ServicePalette, Slide } from '@/domain/types'
 import { readAsDataUrl, imageToPngDataUrl } from '@/lib/files'
 import { addMinutesToTime, formatFullDate, formatPeriod, formatTime } from '@/lib/format'
+import { saveFile, type SaveOutcome } from '@/lib/platform'
 import { deckFileName } from './exportPdf'
 
 // ---------------------------------------------------------------------------
@@ -39,6 +40,7 @@ interface Assets {
 }
 
 async function toBase64(url: string) {
+  if (url.startsWith('data:')) return url
   const res = await fetch(url)
   return readAsDataUrl(await res.blob())
 }
@@ -423,7 +425,7 @@ async function serviceSlide(pptx: Pptx, data: DeckRenderData, slide: Slide, serv
   footer(s, data, index)
 }
 
-export async function exportDeckToPptx(data: DeckRenderData, onProgress?: (done: number, total: number) => void) {
+export async function exportDeckToPptx(data: DeckRenderData, onProgress?: (done: number, total: number) => void): Promise<SaveOutcome> {
   const { default: PptxGenJSCtor } = await import('pptxgenjs')
   const pptx = new PptxGenJSCtor()
   pptx.layout = 'LAYOUT_WIDE'
@@ -447,5 +449,6 @@ export async function exportDeckToPptx(data: DeckRenderData, onProgress?: (done:
     }
     onProgress?.(i + 1, total)
   }
-  await pptx.writeFile({ fileName: deckFileName(data, 'pptx') })
+  const blob = (await pptx.write({ outputType: 'blob' })) as Blob
+  return saveFile(blob, deckFileName(data, 'pptx'))
 }

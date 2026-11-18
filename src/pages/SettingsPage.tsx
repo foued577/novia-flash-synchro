@@ -12,7 +12,8 @@ import { PALETTE_LABELS, SERVICE_PALETTES, type PaletteKey } from '@/data/catalo
 import { FORECAST_REFERENCE_LABELS, SLIDE_KIND_LABELS } from '@/domain/periods'
 import { ROLE_DESCRIPTIONS, ROLE_LABELS } from '@/domain/status'
 import type { AppSettings, AppUser, ForecastReference, Role, Service, ServiceIcon as ServiceIconKey, SlideKind, SlideTemplate } from '@/domain/types'
-import { downloadBlob, slugify } from '@/lib/files'
+import { slugify } from '@/lib/files'
+import { saveFile } from '@/lib/platform'
 import { WEEKDAY_LABELS } from '@/lib/format'
 import { uid } from '@/lib/ids'
 import { useServices } from '@/store/hooks'
@@ -375,7 +376,12 @@ function DataSettings() {
               icon={Download}
               onClick={async () => {
                 const json = await repo.exportData?.()
-                if (json) downloadBlob(new Blob([json], { type: 'application/json' }), `flash-synchro-sauvegarde-${new Date().toISOString().slice(0, 10)}.json`)
+                if (!json) return
+                try {
+                  await saveFile(new Blob([json], { type: 'application/json' }), `flash-synchro-sauvegarde-${new Date().toISOString().slice(0, 10)}.json`)
+                } catch (error) {
+                  toast.error(error instanceof Error ? error.message : 'Téléchargement impossible')
+                }
               }}
             >
               Exporter les données (JSON)

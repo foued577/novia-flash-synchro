@@ -114,6 +114,18 @@ export class DemoRepository implements DataRepository {
     throw new Error('Le lien de connexion par e-mail est disponible une fois Supabase connecté.')
   }
 
+  async requestPasswordReset(): Promise<void> {
+    throw new Error('La réinitialisation du mot de passe est disponible une fois Supabase connecté.')
+  }
+
+  async updatePassword(): Promise<void> {
+    throw new Error('Les mots de passe sont gérés par Supabase : indisponible en démonstration.')
+  }
+
+  consumePasswordSetupRequest() {
+    return false
+  }
+
   async signInAsDemoUser(userId: string): Promise<AppUser> {
     const user = this.db.snapshot.users.find((u) => u.id === userId)
     if (!user) throw new Error('Profil introuvable')

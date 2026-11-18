@@ -52,6 +52,7 @@ function BrandPanel() {
 function PasswordForm() {
   const signIn = useAppStore((s) => s.signInWithPassword)
   const sendMagicLink = useAppStore((s) => s.sendMagicLink)
+  const requestPasswordReset = useAppStore((s) => s.requestPasswordReset)
   const navigate = useNavigate()
   const location = useLocation()
   const [email, setEmail] = useState('')
@@ -86,6 +87,20 @@ function PasswordForm() {
     }
   }
 
+  const forgot = async () => {
+    if (!email) return setError('Saisissez votre adresse e-mail pour recevoir le lien de réinitialisation.')
+    setBusy(true)
+    setError(null)
+    try {
+      await requestPasswordReset(email)
+      toast.success('Si un compte existe pour cette adresse, un lien de réinitialisation vient d’être envoyé.')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Envoi impossible')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <form onSubmit={submit} className="space-y-4">
       <Field label="Adresse e-mail">
@@ -94,6 +109,11 @@ function PasswordForm() {
       <Field label="Mot de passe">
         <input className="field" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
       </Field>
+      <div className="-mt-2 text-right">
+        <button type="button" onClick={forgot} disabled={busy} className="text-sm font-semibold text-novia-600 hover:underline disabled:opacity-50">
+          Mot de passe oublié ?
+        </button>
+      </div>
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p>}
       <Button type="submit" variant="primary" size="lg" icon={KeyRound} loading={busy} className="w-full">
         Se connecter

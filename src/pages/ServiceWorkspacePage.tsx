@@ -54,6 +54,7 @@ import { submissionDeadline, submissionStatus } from '@/domain/selectors'
 import { SUBMISSION_ORDER, SUBMISSION_STATUS } from '@/domain/status'
 import type { Block, BlockType, BlockWidth, Slide, SlideKind, TableBlock } from '@/domain/types'
 import { formatBytes, formatFullDate, formatTime } from '@/lib/format'
+import { dataUrlToBlob, saveFile } from '@/lib/platform'
 import { useBundle, useServices } from '@/store/hooks'
 import { useAppStore } from '@/store/useAppStore'
 
@@ -429,9 +430,21 @@ export function ServiceWorkspacePage() {
                 {attachments.map((a) => (
                   <li key={a.id} className="flex items-center gap-2 rounded-lg bg-canvas px-2.5 py-2 text-sm">
                     <FileText size={16} className="shrink-0 text-ink-3" />
-                    <a href={a.url} download={a.fileName} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate font-semibold text-novia-700 hover:underline">
+                    <button
+                      type="button"
+                      className="min-w-0 flex-1 truncate text-left font-semibold text-novia-700 hover:underline"
+                      title={`Télécharger ${a.fileName}`}
+                      onClick={async () => {
+                        try {
+                          if (a.url.startsWith('data:')) await saveFile(dataUrlToBlob(a.url), a.fileName)
+                          else window.open(a.url, '_blank', 'noopener')
+                        } catch (error) {
+                          toast.error(error instanceof Error ? error.message : 'Téléchargement impossible')
+                        }
+                      }}
+                    >
                       {a.fileName}
-                    </a>
+                    </button>
                     <span className="shrink-0 text-xs text-ink-3">{formatBytes(a.sizeBytes)}</span>
                     {editable && <IconButton icon={Trash2} label={`Supprimer ${a.fileName}`} size="xs" onClick={() => deleteAttachment(a)} />}
                   </li>

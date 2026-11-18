@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { CalendarDays, CalendarRange, Check, CheckCircle2, ChevronsUpDown, CircleDashed, CloudUpload, History, LayoutDashboard, LogOut, Menu as MenuIcon, PencilLine, Play, Send, Settings, UserRoundCog, X } from 'lucide-react'
+import { CalendarDays, CalendarRange, Check, CheckCircle2, ChevronsUpDown, CircleDashed, CloudUpload, History, KeyRound, LayoutDashboard, LogOut, Menu as MenuIcon, PencilLine, Play, Send, Settings, UserRoundCog, X } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { env } from '@/config/env'
@@ -14,6 +14,7 @@ import { AppMark } from '../brand/Logo'
 import { Button } from '../ui/Button'
 import { Menu } from '../ui/Menu'
 import { Avatar, ServiceIcon } from '../ui/Misc'
+import { PasswordDialog } from './PasswordDialog'
 import { ProfileSwitcher } from './ProfileSwitcher'
 
 function NavItem({ to, icon: Icon, children, end, badge }: { to: string; icon: typeof LayoutDashboard; children: ReactNode; end?: boolean; badge?: ReactNode }) {
@@ -45,6 +46,7 @@ function StatusGlyph({ status }: { status: keyof typeof STATUS_GLYPHS }) {
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const user = useAppStore((s) => s.user)
   const signOut = useAppStore((s) => s.signOut)
+  const setPasswordDialog = useAppStore((s) => s.setPasswordDialog)
   const services = useServices().filter((s) => s.active)
   const meeting = useCurrentMeeting()
   const bundle = useBundle(meeting?.id)
@@ -125,7 +127,9 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             align="left"
             className="w-full"
             items={[
-              ...(env.dataMode === 'demo' ? [{ label: 'Changer de profil', icon: UserRoundCog, onSelect: () => setSwitcher(true) }] : []),
+              ...(env.dataMode === 'demo'
+                ? [{ label: 'Changer de profil', icon: UserRoundCog, onSelect: () => setSwitcher(true) }]
+                : [{ label: 'Changer mon mot de passe', icon: KeyRound, onSelect: () => setPasswordDialog('change') }]),
               {
                 label: 'Se déconnecter',
                 icon: LogOut,
@@ -149,6 +153,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       )}
       <ProfileSwitcher open={switcher} onClose={() => setSwitcher(false)} />
+      {env.dataMode === 'supabase' && <PasswordDialog />}
     </div>
   )
 }

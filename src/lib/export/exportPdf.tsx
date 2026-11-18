@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client'
 import { RenderModeContext, SLIDE_H, SLIDE_W, type DeckRenderData } from '@/components/slides/context'
 import { DeckEntryView } from '@/components/slides/DeckSlides'
 import { slugify } from '@/lib/files'
+import { saveFile, type SaveOutcome } from '@/lib/platform'
 
 // ---------------------------------------------------------------------------
 // Export PDF : chaque diapositive est rendue hors écran en 1920×1080 puis
@@ -61,7 +62,7 @@ export function deckFileName(data: DeckRenderData, ext: string) {
   return `${slugify(`flash-synchro-${data.meeting.isoYear}-s${String(data.meeting.isoWeek).padStart(2, '0')}`)}.${ext}`
 }
 
-export async function exportDeckToPdf(data: DeckRenderData, onProgress?: (done: number, total: number) => void) {
+export async function exportDeckToPdf(data: DeckRenderData, onProgress?: (done: number, total: number) => void): Promise<SaveOutcome> {
   const [{ jsPDF }, htmlToImage] = await Promise.all([import('jspdf'), import('html-to-image')])
   const { nodes, dispose } = await mountDeckOffscreen(data)
   try {
@@ -74,7 +75,7 @@ export async function exportDeckToPdf(data: DeckRenderData, onProgress?: (done: 
       pdf.addImage(url, 'JPEG', 0, 0, 1440, 810, undefined, 'FAST')
       onProgress?.(i + 1, nodes.length)
     }
-    pdf.save(deckFileName(data, 'pdf'))
+    return await saveFile(pdf.output('blob'), deckFileName(data, 'pdf'))
   } finally {
     dispose()
   }

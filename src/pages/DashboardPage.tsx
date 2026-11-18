@@ -1,5 +1,6 @@
-import { ArrowDownRight, ArrowRight, ArrowUpRight, CalendarClock, ChevronRight, Hourglass, Mail, Play, Presentation, Timer } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
+import { ArrowDownRight, ArrowRight, ArrowUpRight, CalendarClock, ChevronRight, Copy, Hourglass, Mail, Play, Presentation, Timer } from 'lucide-react'
+import { toast } from 'sonner'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { Sparkline } from '@/components/dashboard/Sparkline'
@@ -7,6 +8,7 @@ import { TimeRibbon } from '@/components/brand/TimeRibbon'
 import { kpiDelta } from '@/components/slides/BlockViews'
 import { MeetingStatusBadge, StatusBadge } from '@/components/ui/Badges'
 import { Button } from '@/components/ui/Button'
+import { Dialog } from '@/components/ui/Dialog'
 import { Avatar, EmptyState, ProgressRing, SectionTitle, ServiceBadge } from '@/components/ui/Misc'
 import { participatingServices, plannedMinutes } from '@/domain/deck'
 import { computePeriods, meetingTitle } from '@/domain/periods'
@@ -15,6 +17,7 @@ import { completion, kpiHistory, serviceFill, submissionDeadline, submissionStat
 import { SUBMISSION_ORDER } from '@/domain/status'
 import type { KpiItem, MeetingBundle, Service } from '@/domain/types'
 import { formatDuration, formatFullDate, formatFullDateCap, formatPeriodShort, formatRelativeDay, formatTime, parseNumber } from '@/lib/format'
+import { copyText } from '@/lib/platform'
 import { useBundle, useCurrentMeeting, useServices, useSortedMeetings } from '@/store/hooks'
 import { useAppStore } from '@/store/useAppStore'
 
@@ -83,6 +86,7 @@ export function DashboardPage() {
   const meetings = useSortedMeetings()
   const allServices = useServices()
   const navigate = useNavigate()
+  const [reminderOpen, setReminderOpen] = useState(false)
 
   const recent = useMemo(() => meetings.filter((m) => m.id !== meeting?.id && m.meetingDate <= (meeting?.meetingDate ?? '9999')).slice(0, 7), [meetings, meeting])
   useEffect(() => {
@@ -114,12 +118,10 @@ export function DashboardPage() {
     navigate(`/reunions/${meeting.id}/presentation`)
   }
 
-  const reminder = () => {
-    const emails = pending.map((s) => managerOf(s)?.email).filter(Boolean).join(',')
-    const subject = `Flash Synchro semaine ${meeting.isoWeek} — informations à transmettre`
-    const body = `Bonjour,\n\nPour préparer la Flash Synchro du ${formatFullDate(meeting.meetingDate)} à ${formatTime(meeting.meetingTime)}, merci de compléter et de soumettre les informations de votre service avant le ${formatFullDate(deadline.date, false)}, ${formatTime(deadline.time)}.\n\nMerci,\n${user.fullName}`
-    window.location.href = `mailto:${emails}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
-  }
+  const recipients = pending.map((s) => managerOf(s)).filter((u): u is NonNullable<typeof u> => !!u)
+  const reminderSubject = `Flash Synchro semaine ${meeting.isoWeek} — informations à transmettre`
+  const reminderBody = `Bonjour,\n\nPour préparer la Flash Synchro du ${formatFullDate(meeting.meetingDate)} à ${formatTime(meeting.meetingTime)}, merci de compléter et de soumettre les informations de votre service avant le ${formatFullDate(deadline.date, false)}, ${formatTime(deadline.time)}.\n\nMerci,\n${user.fullName}`
+  const mailto = `mailto:${recipients.map((u) => u.email).join(',')}?subject=${encodeURIComponent(reminderSubject)}&body=${encodeURIComponent(reminderBody)}`
 
   const durationData = [...recent]
     .reverse()
@@ -256,8 +258,8 @@ export function DashboardPage() {
               </ul>
             )}
             {pending.length > 0 && isAdmin(user) && (
-              <Button variant="subtle" size="sm" icon={Mail} className="mt-4" onClick={reminder}>
-                Relancer par e-mail
+              <Button variant="subtle" size="sm" icon={Mail} className="mt-4" onClick={() => setReminderOpen(true)}>
+                Relancer les services
               </Button>
             )}
           </div>
@@ -387,6 +389,51 @@ export function DashboardPage() {
           )}
         </div>
       </section>
+      <Dialog
+        open={reminderOpen}
+        onClose={() => setReminderOpen(false)}
+        title="Relancer les services en attente"
+        description="Copiez le message et les adresses, ou ouvrez-le directement dans votre messagerie."
+        size="lg"
+        footer={
+          <>
+            <a href={mailto} target="_blank" rel="noreferrer" className="inline-flex h-10 items-center gap-2 rounded-lg px-4 font-semibold text-novia-700 hover:bg-novia-50">
+              <Mail size={18} /> Ouvrir dans la messagerie
+            </a>
+            <Button
+              icon={Copy}
+              onClick={async () => ((await copyText(recipients.map((u) => u.email).join(', '))) ? toast.success('Adresses copiées') : toast.error('Copie impossible : sélectionnez le texte'))}
+            >
+              Copier les adresses
+            </Button>
+            <Button variant="primary" icon={Copy} onClick={async () => ((await copyText(`${reminderSubject}\n\n${reminderBody}`)) ? toast.success('Message copié') : toast.error('Copie impossible : sélectionnez le texte'))}>
+              Copier le message
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <div className="label">Destinataires</div>
+            <ul className="space-y-1 text-[15px]">
+              {recipients.map((u) => (
+                <li key={u.id}>
+                  <strong className="font-semibold">{u.fullName}</strong> — <span className="select-all text-ink-2">{u.email}</span>
+                </li>
+              ))}
+              {recipients.length === 0 && <li className="text-ink-3">Aucun responsable désigné pour ces services.</li>}
+            </ul>
+          </div>
+          <div>
+            <div className="label">Objet</div>
+            <p className="select-all rounded-lg bg-canvas px-3 py-2 text-[15px]">{reminderSubject}</p>
+          </div>
+          <div>
+            <div className="label">Message</div>
+            <p className="select-all rounded-lg bg-canvas px-3 py-2 text-[15px] whitespace-pre-line">{reminderBody}</p>
+          </div>
+        </div>
+      </Dialog>
     </div>
   )
 }

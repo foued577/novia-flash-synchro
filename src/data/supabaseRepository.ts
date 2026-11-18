@@ -271,9 +271,17 @@ export class SupabaseRepository implements DataRepository {
   readonly mode = 'supabase' as const
   readonly client: SupabaseClient
 
+  private passwordSetup = false
+
   constructor(url: string, anonKey: string) {
+    // Lien d'invitation ou de réinitialisation : à lire avant que le client ne nettoie l'URL.
+    const hash = typeof window === 'undefined' ? '' : `${window.location.hash}${window.location.search}`
+    this.passwordSetup = /type=(invite|recovery)/.test(hash)
     this.client = createClient(url, anonKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    })
+    this.client.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') this.passwordSetup = true
     })
   }
 
@@ -302,6 +310,27 @@ export class SupabaseRepository implements DataRepository {
   async sendMagicLink(email: string) {
     const { error } = await this.client.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin, shouldCreateUser: false } })
     if (error) fail(error, 'Envoi du lien')
+  }
+
+  async requestPasswordReset(email: string) {
+    const { error } = await this.client.auth.resetPasswordForEmail(email.trim(), { redirectTo: window.location.origin })
+    if (error) fail(error, 'Réinitialisation')
+  }
+
+  async updatePassword(password: string) {
+    const { error } = await this.client.auth.updateUser({ password })
+    if (error) {
+      if (/should be different/i.test(error.message)) throw new Error('Le nouveau mot de passe doit être différent de l’ancien.')
+      if (/at least|weak|short/i.test(error.message)) throw new Error('Mot de passe trop faible : 8 caractères minimum.')
+      fail(error, 'Mot de passe')
+    }
+    this.passwordSetup = false
+  }
+
+  consumePasswordSetupRequest() {
+    const value = this.passwordSetup
+    this.passwordSetup = false
+    return value
   }
 
   async signInAsDemoUser(): Promise<AppUser> {

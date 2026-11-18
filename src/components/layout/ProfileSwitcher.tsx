@@ -2,15 +2,20 @@ import { clsx } from 'clsx'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ROLE_LABELS } from '@/domain/status'
-import type { AppUser } from '@/domain/types'
+import type { AppUser, Service } from '@/domain/types'
 import { useAppStore } from '@/store/useAppStore'
 import { Dialog } from '../ui/Dialog'
 import { Avatar } from '../ui/Misc'
 
+// Références stables : un sélecteur qui renverrait un nouveau tableau à chaque
+// appel provoquerait une boucle de rendu.
+const NO_USERS: AppUser[] = []
+const NO_SERVICES: Service[] = []
+
 /** Liste des profils de démonstration, regroupés par rôle. */
 export function DemoProfiles({ onPick, currentId }: { onPick: (u: AppUser) => void; currentId?: string }) {
-  const users = useAppStore((s) => s.snapshot?.users ?? [])
-  const services = useAppStore((s) => s.snapshot?.services ?? [])
+  const users = useAppStore((s) => s.snapshot?.users ?? NO_USERS)
+  const services = useAppStore((s) => s.snapshot?.services ?? NO_SERVICES)
   const groups: { role: AppUser['role']; title: string }[] = [
     { role: 'admin', title: 'Administration' },
     { role: 'manager', title: 'Responsables de service' },
