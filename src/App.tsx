@@ -7,6 +7,7 @@ import { ConfirmHost } from '@/components/ui/Dialog'
 import { env } from '@/config/env'
 import { isAdmin } from '@/domain/permissions'
 import { currentMeeting } from '@/domain/selectors'
+import { AiCompanyPage } from '@/pages/AiCompanyPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { HistoryPage } from '@/pages/HistoryPage'
 import { LoginPage } from '@/pages/LoginPage'
@@ -68,6 +69,14 @@ const routes = [
       { path: 'reunions/:meetingId', element: <MeetingPage /> },
       { path: 'reunions/:meetingId/services/:serviceId', element: <ServiceWorkspacePage /> },
       { path: 'historique', element: <HistoryPage /> },
+      {
+        path: 'ai-company/:tab?',
+        element: (
+          <RequireAdmin>
+            <AiCompanyPage />
+          </RequireAdmin>
+        ),
+      },
       {
         path: 'parametres',
         element: (

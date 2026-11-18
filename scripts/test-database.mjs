@@ -17,7 +17,7 @@ async function expectError(label, fn, pattern) {
 await db.exec(`
   create role anon nologin; create role authenticated nologin; create role service_role nologin;
   create schema auth;
-  create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb default '{}'::jsonb);
+  create table auth.users (id uuid primary key, email text, raw_user_meta_data jsonb default '{}'::jsonb, last_sign_in_at timestamptz, email_confirmed_at timestamptz);
   create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
   create schema storage;
   create table storage.buckets (id text primary key, name text, public boolean, file_size_limit bigint, allowed_mime_types text[]);
@@ -27,7 +27,7 @@ await db.exec(`
   grant execute on function auth.uid() to authenticated;
 `)
 
-for (const f of ['20261117000001_schema.sql', '20261117000002_security.sql', '20261117000003_storage.sql', '20261117000004_weekly_meetings.sql', '20261118000005_hardening.sql', '20261118000006_table_grants.sql']) {
+for (const f of ['20261117000001_schema.sql', '20261117000002_security.sql', '20261117000003_storage.sql', '20261117000004_weekly_meetings.sql', '20261118000005_hardening.sql', '20261118000006_table_grants.sql', '20261118000007_ai_company.sql']) {
   try { await db.exec(readFileSync(`${ROOT}/migrations/${f}`, 'utf8')); ok(`migration ${f}`) } catch (e) { fail(`migration ${f}`, e); process.exit(1) }
 }
 await db.exec(`grant all on all tables in schema public to authenticated; grant all on storage.objects to authenticated;`)
@@ -104,4 +104,26 @@ r instanceof Error ? ok('stockage : dépôt refusé hors de son service') : fail
 await db.exec(`update public.submissions set status = 'in_progress' where meeting_id = '${newId}' and service_id = '${COMMERCIAL}'`)
 r = await as(MANAGER, () => db.query(`insert into storage.objects (bucket_id, name) values ('attachments', $1)`, [`${newId}/${COMMERCIAL}/rapport.pdf`]))
 r.affectedRows === 1 ? ok('stockage : dépôt autorisé dans son service') : fail('storage own', r.affectedRows)
+console.log('\nAI Company')
+r = await as(ADMIN, () => db.query(`select count(*)::int n from public.ai_agents`))
+r.rows[0].n === 7 ? ok('administrateur : voit les 7 agents') : fail('admin agents', r.rows[0].n)
+r = await as(MANAGER, () => db.query(`select count(*)::int n from public.ai_agents`))
+r.rows[0].n === 0 ? ok('responsable : aucun accès à l’AI Company') : fail('manager agents', r.rows[0].n)
+r = await as(VIEWER, () => db.query(`insert into public.ai_missions (title) values ('intrus')`).catch((e) => e))
+r instanceof Error ? ok('collaborateur : ne crée pas de mission') : fail('viewer mission', 'inséré')
+r = await as(VIEWER, () => db.query(`insert into public.support_requests (category, subject, body) values ('bug', 'Export PDF vide', 'Le PDF est blanc')`))
+r.affectedRows === 1 ? ok('collaborateur : envoie une demande au support') : fail('support insert', r.affectedRows)
+r = await as(VIEWER, () => db.query(`insert into public.support_requests (subject, response) values ('Triche', 'auto-réponse')`).catch((e) => e))
+r instanceof Error ? ok('collaborateur : ne peut pas écrire la réponse') : fail('support response', 'inséré')
+r = await as(MANAGER, () => db.query(`select count(*)::int n from public.support_requests`))
+r.rows[0].n === 0 ? ok('demandes : chacun ne voit que les siennes') : fail('support read', r.rows[0].n)
+r = await as(ADMIN, () => db.query(`select count(*)::int n from public.support_requests`))
+r.rows[0].n === 1 ? ok('administrateur : voit toutes les demandes') : fail('admin support', r.rows[0].n)
+await expectError('outils d’audit interdits aux comptes', () => as(ADMIN, () => db.query(`select public.ai_security_audit()`)), /permission/)
+for (const fn of ['ai_security_audit()', 'ai_health_checks()', 'ai_database_overview()', 'ai_usage_stats(8)']) {
+  try { const v = (await one(`select public.${fn} v`)).v; v && typeof v === 'object' ? ok(`${fn} → ${Object.keys(v).length} indicateurs`) : fail(fn, v) } catch (e) { fail(fn, e) }
+}
+const audit = (await one(`select public.ai_security_audit() v`)).v
+audit.tables_without_rls.length === 0 ? ok('audit : toutes les tables ont la RLS') : fail('RLS manquante', audit.tables_without_rls)
+
 console.log(process.exitCode ? '\nÉCHECS détectés' : '\nTous les contrôles SQL sont passés.')

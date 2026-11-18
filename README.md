@@ -20,6 +20,7 @@ Chaque service saisit ses informations dans son espace, la direction valide, et 
 8. [Déploiement](#déploiement) et [passage en production sur Cloudflare Pages](#passage-en-production-sur-cloudflare-pages)
 9. [Architecture](#architecture)
 10. [Tests](#tests)
+11. [AI Company](docs/AI_COMPANY.md) — organisation d’agents IA (CEO, CTO, RSSI, BA, QA, Support, Data)
 
 ---
 
@@ -161,6 +162,7 @@ Le chronomètre passe en **ambre** à l’approche de la fin du temps de parole 
    supabase/migrations/20261117000004_weekly_meetings.sql
    supabase/migrations/20261118000005_hardening.sql
    supabase/migrations/20261118000006_table_grants.sql
+   supabase/migrations/20261118000007_ai_company.sql
    supabase/seed.sql              ← services, couleurs, durées et modèles de diapositives
    supabase/demo-data.sql         ← facultatif : 7 réunions de démonstration
    ```

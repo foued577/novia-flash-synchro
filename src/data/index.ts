@@ -26,3 +26,9 @@ function forgetDemoData() {
 }
 
 export type { DataRepository } from './repository'
+
+/** Client Supabase (mode Supabase uniquement) — utilisé par l'AI Company. */
+export function getSupabaseClient() {
+  const repo = getRepository()
+  return repo instanceof SupabaseRepository ? repo.client : null
+}

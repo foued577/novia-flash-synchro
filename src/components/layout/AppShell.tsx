@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import { CalendarDays, CalendarRange, Check, CheckCircle2, ChevronsUpDown, CircleDashed, CloudUpload, History, KeyRound, LayoutDashboard, LogOut, Menu as MenuIcon, PencilLine, Play, Send, Settings, UserRoundCog, X } from 'lucide-react'
+import { Bot, CalendarDays, LifeBuoy, CalendarRange, Check, CheckCircle2, ChevronsUpDown, CircleDashed, CloudUpload, History, KeyRound, LayoutDashboard, LogOut, Menu as MenuIcon, PencilLine, Play, Send, Settings, UserRoundCog, X } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { env } from '@/config/env'
@@ -15,6 +15,7 @@ import { Button } from '../ui/Button'
 import { Menu } from '../ui/Menu'
 import { Avatar, ServiceIcon } from '../ui/Misc'
 import { PasswordDialog } from './PasswordDialog'
+import { SupportDialog } from './SupportDialog'
 import { ProfileSwitcher } from './ProfileSwitcher'
 
 function NavItem({ to, icon: Icon, children, end, badge }: { to: string; icon: typeof LayoutDashboard; children: ReactNode; end?: boolean; badge?: ReactNode }) {
@@ -52,6 +53,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const bundle = useBundle(meeting?.id)
   const navigate = useNavigate()
   const [switcher, setSwitcher] = useState(false)
+  const [support, setSupport] = useState(false)
   const myService = services.find((s) => s.id === user?.serviceId)
 
   return (
@@ -113,6 +115,11 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         {isAdmin(user) && (
           <div>
             <div className="mb-1.5 px-3 text-[13px] font-semibold text-ink-3">Administration</div>
+            {env.dataMode === 'supabase' && (
+              <NavItem to="/ai-company" icon={Bot}>
+                AI Company
+              </NavItem>
+            )}
             <NavItem to="/parametres" icon={Settings}>
               Paramètres
             </NavItem>
@@ -129,7 +136,10 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             items={[
               ...(env.dataMode === 'demo'
                 ? [{ label: 'Changer de profil', icon: UserRoundCog, onSelect: () => setSwitcher(true) }]
-                : [{ label: 'Changer mon mot de passe', icon: KeyRound, onSelect: () => setPasswordDialog('change') }]),
+                : [
+                    { label: 'Aide et demandes', icon: LifeBuoy, onSelect: () => setSupport(true) },
+                    { label: 'Changer mon mot de passe', icon: KeyRound, onSelect: () => setPasswordDialog('change') },
+                  ]),
               {
                 label: 'Se déconnecter',
                 icon: LogOut,
@@ -154,6 +164,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       )}
       <ProfileSwitcher open={switcher} onClose={() => setSwitcher(false)} />
       {env.dataMode === 'supabase' && <PasswordDialog />}
+      {env.dataMode === 'supabase' && <SupportDialog open={support} onClose={() => setSupport(false)} />}
     </div>
   )
 }
