@@ -69,14 +69,18 @@ const routes = [
       { path: 'reunions/:meetingId', element: <MeetingPage /> },
       { path: 'reunions/:meetingId/services/:serviceId', element: <ServiceWorkspacePage /> },
       { path: 'historique', element: <HistoryPage /> },
-      {
-        path: 'ai-company/:tab?',
-        element: (
-          <RequireAdmin>
-            <AiCompanyPage />
-          </RequireAdmin>
-        ),
-      },
+      ...(env.aiCompany
+        ? [
+            {
+              path: 'ai-company/:tab?',
+              element: (
+                <RequireAdmin>
+                  <AiCompanyPage />
+                </RequireAdmin>
+              ),
+            },
+          ]
+        : []),
       {
         path: 'parametres',
         element: (

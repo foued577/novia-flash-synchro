@@ -1,5 +1,7 @@
 # AI Company — architecture et exploitation
 
+> **Statut : archivé.** Le module est masqué dans l’application (`VITE_FEATURE_AI_COMPANY=false` dans `.env.production`) et mis en pause en base (`ai_settings.enabled = false`, `scheduled = false`). Pour le réactiver : passer la variable à `true`, redéployer, puis réactiver « AI Company active » et « Travail planifié » dans ses Paramètres IA. Le compte Anthropic doit disposer de crédit.
+
 Une organisation de sept agents IA (Claude) qui pilote, maintient et fait évoluer NOVIA Flash Synchro, sous la supervision des administrateurs.
 
 | Agent | Nom | Rôle | Rend compte à |

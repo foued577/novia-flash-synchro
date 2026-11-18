@@ -12,5 +12,7 @@ export const env = {
   supabaseRequestedButMissing: requestedMode === 'supabase' && !supabaseConfigured,
   supabaseUrl: url,
   supabaseAnonKey: anonKey,
+  /** Module AI Company (et « Aide et demandes ») : archivé tant que VITE_FEATURE_AI_COMPANY ≠ true. */
+  aiCompany: import.meta.env.VITE_FEATURE_AI_COMPANY === 'true',
   router: (['hash', 'memory'].includes(import.meta.env.VITE_ROUTER as string) ? import.meta.env.VITE_ROUTER : 'browser') as 'hash' | 'browser' | 'memory',
 }

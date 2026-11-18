@@ -115,7 +115,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         {isAdmin(user) && (
           <div>
             <div className="mb-1.5 px-3 text-[13px] font-semibold text-ink-3">Administration</div>
-            {env.dataMode === 'supabase' && (
+            {env.dataMode === 'supabase' && env.aiCompany && (
               <NavItem to="/ai-company" icon={Bot}>
                 AI Company
               </NavItem>
@@ -137,7 +137,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               ...(env.dataMode === 'demo'
                 ? [{ label: 'Changer de profil', icon: UserRoundCog, onSelect: () => setSwitcher(true) }]
                 : [
-                    { label: 'Aide et demandes', icon: LifeBuoy, onSelect: () => setSupport(true) },
+                    ...(env.aiCompany ? [{ label: 'Aide et demandes', icon: LifeBuoy, onSelect: () => setSupport(true) }] : []),
                     { label: 'Changer mon mot de passe', icon: KeyRound, onSelect: () => setPasswordDialog('change') },
                   ]),
               {
@@ -164,7 +164,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       )}
       <ProfileSwitcher open={switcher} onClose={() => setSwitcher(false)} />
       {env.dataMode === 'supabase' && <PasswordDialog />}
-      {env.dataMode === 'supabase' && <SupportDialog open={support} onClose={() => setSupport(false)} />}
+      {env.dataMode === 'supabase' && env.aiCompany && <SupportDialog open={support} onClose={() => setSupport(false)} />}
     </div>
   )
 }
