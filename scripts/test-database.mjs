@@ -27,7 +27,7 @@ await db.exec(`
   grant execute on function auth.uid() to authenticated;
 `)
 
-for (const f of ['20261117000001_schema.sql', '20261117000002_security.sql', '20261117000003_storage.sql', '20261117000004_weekly_meetings.sql']) {
+for (const f of ['20261117000001_schema.sql', '20261117000002_security.sql', '20261117000003_storage.sql', '20261117000004_weekly_meetings.sql', '20261118000005_hardening.sql']) {
   try { await db.exec(readFileSync(`${ROOT}/migrations/${f}`, 'utf8')); ok(`migration ${f}`) } catch (e) { fail(`migration ${f}`, e); process.exit(1) }
 }
 await db.exec(`grant all on all tables in schema public to authenticated; grant all on storage.objects to authenticated;`)

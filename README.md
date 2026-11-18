@@ -192,7 +192,7 @@ Les variables `VITE_*` sont intégrées au moment du build : relancez un build a
 
 ### Passage en production sur Cloudflare Pages
 
-1. **Variables d’environnement** — *Workers & Pages → novia-flash-synchro → Settings → Variables and Secrets*, pour **Production** (et Preview si utilisé) :
+1. **Variables d’environnement** — déjà fournies pour ce projet dans `.env.production` (URL + clé *publishable*, publique par conception). Pour un autre projet Supabase, modifiez ce fichier ou définissez les variables dans *Workers & Pages → novia-flash-synchro → Settings → Variables and Secrets*, pour **Production** (et Preview si utilisé) :
 
    | Variable | Valeur |
    |---|---|
