@@ -159,6 +159,8 @@ Le chronomètre passe en **ambre** à l’approche de la fin du temps de parole 
    supabase/migrations/20261117000002_security.sql
    supabase/migrations/20261117000003_storage.sql
    supabase/migrations/20261117000004_weekly_meetings.sql
+   supabase/migrations/20261118000005_hardening.sql
+   supabase/migrations/20261118000006_table_grants.sql
    supabase/seed.sql              ← services, couleurs, durées et modèles de diapositives
    supabase/demo-data.sql         ← facultatif : 7 réunions de démonstration
    ```
