@@ -163,6 +163,7 @@ Le chronomètre passe en **ambre** à l’approche de la fin du temps de parole 
    supabase/migrations/20261118000005_hardening.sql
    supabase/migrations/20261118000006_table_grants.sql
    supabase/migrations/20261118000007_ai_company.sql
+   supabase/migrations/20261118000008_ai_schedule.sql   # nécessite pg_cron et pg_net
    supabase/seed.sql              ← services, couleurs, durées et modèles de diapositives
    supabase/demo-data.sql         ← facultatif : 7 réunions de démonstration
    ```

@@ -24,6 +24,7 @@ export interface Settings {
   autonomy: 'observe' | 'supervised' | 'autonomous'
   daily_token_budget: number
   max_steps: number
+  scheduled?: boolean
 }
 
 export interface Ctx {

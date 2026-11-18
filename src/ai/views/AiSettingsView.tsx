@@ -32,7 +32,7 @@ export function AiSettingsView() {
 
   const save = async () => {
     try {
-      await aiDb.saveSettings({ enabled: draft.enabled, model: draft.model, autonomy: draft.autonomy, daily_token_budget: draft.daily_token_budget, max_steps: draft.max_steps })
+      await aiDb.saveSettings({ enabled: draft.enabled, scheduled: draft.scheduled, model: draft.model, autonomy: draft.autonomy, daily_token_budget: draft.daily_token_budget, max_steps: draft.max_steps })
       toast.success('Paramètres IA enregistrés.')
     } catch (e) {
       toast.error((e as Error).message)
@@ -49,6 +49,12 @@ export function AiSettingsView() {
           </span>
         </div>
         <Switch checked={draft.enabled} onChange={(v) => setDraft({ ...draft, enabled: v })} label="AI Company active" description="En pause, aucun agent ne travaille et aucun appel au modèle n’est fait." />
+        <Switch
+          checked={draft.scheduled}
+          onChange={(v) => setDraft({ ...draft, scheduled: v })}
+          label="Travail planifié"
+          description="Du lundi au vendredi : un cycle chaque heure de 8 h à 19 h (rien n’est consommé s’il n’y a pas de travail en attente) et le rapport quotidien vers 18 h (seulement s’il y a eu de l’activité)."
+        />
         <fieldset>
           <legend className="label">Niveau d’autonomie</legend>
           <div className="grid gap-2 md:grid-cols-3">
@@ -124,13 +130,6 @@ export function AiSettingsView() {
         </table>
       </section>
 
-      <section className="panel space-y-2 p-5 text-sm text-ink-2">
-        <h2 className="font-bold text-ink">Travail planifié (facultatif)</h2>
-        <p>
-          Pour que les agents travaillent sans que la page soit ouverte (par exemple un cycle toutes les heures et un rapport chaque soir), ajoutez un secret <code className="rounded bg-canvas px-1">AI_CRON_SECRET</code> dans Supabase, puis une tâche planifiée qui appelle la fonction <code className="rounded bg-canvas px-1">ai-company</code> avec l’en-tête <code className="rounded bg-canvas px-1">x-ai-cron-secret</code>. La procédure est détaillée dans <code className="rounded bg-canvas px-1">docs/AI_COMPANY.md</code>.
-        </p>
-        <p className="text-ink-3">État : {status?.cron ? 'secret de planification configuré.' : 'pas de planification configurée.'}</p>
-      </section>
     </div>
   )
 }

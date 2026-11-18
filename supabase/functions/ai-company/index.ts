@@ -7,7 +7,8 @@
 //   { action: 'daily_report' }                  → rapport quotidien en arrière-plan
 //   { action: 'decide', decisionId, approve, note } → validation humaine
 //
-// Secrets : ANTHROPIC_API_KEY (obligatoire), AI_CRON_SECRET (facultatif, tâches planifiées).
+// Secrets : ANTHROPIC_API_KEY (obligatoire). Tâches planifiées : jeton interne
+// public.ai_private.cron_token (pg_cron) ou secret AI_CRON_SECRET.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { BudgetError, chatWithCeo, cycleRound, dailyReport, log, tokensToday } from './engine.ts'
 import { type Agent, type Ctx, executeAction, missionEvent, type Settings } from './tools.ts'
@@ -81,7 +82,16 @@ Deno.serve(async (req) => {
   let userId: string | null = null
   let userName = 'la direction'
   const cronSecret = Deno.env.get('AI_CRON_SECRET')
-  const viaCron = !!cronSecret && req.headers.get('x-ai-cron-secret') === cronSecret
+  const cronHeader = req.headers.get('x-ai-cron-secret')
+  let viaCron = false
+  if (cronHeader && cronHeader.length >= 32) {
+    if (cronSecret && cronHeader === cronSecret) viaCron = true
+    else {
+      const { data: priv } = await db.from('ai_private').select('cron_token').eq('id', 1).maybeSingle()
+      viaCron = !!priv?.cron_token && priv.cron_token === cronHeader
+    }
+    if (!viaCron) return json({ error: 'Jeton de planification invalide.' }, 401)
+  }
   if (!viaCron) {
     const token = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '')
     if (!token) return json({ error: 'Connexion requise.' }, 401)
@@ -107,7 +117,7 @@ Deno.serve(async (req) => {
     if (action === 'status') {
       const ctx = await loadCtx(db, null)
       const { data: running } = await db.from('ai_runs').select('id, trigger, started_at').eq('status', 'running').limit(1).maybeSingle()
-      return json({ configured: !!Deno.env.get('ANTHROPIC_API_KEY'), cron: !!cronSecret, settings: ctx.settings, running, tokensToday: await tokensToday(ctx) })
+      return json({ configured: !!Deno.env.get('ANTHROPIC_API_KEY'), cron: !!ctx.settings.scheduled, settings: ctx.settings, running, tokensToday: await tokensToday(ctx) })
     }
 
     // --- Validation humaine -----------------------------------------------------
@@ -142,6 +152,15 @@ Deno.serve(async (req) => {
     }
 
     const ctx = await loadCtx(db, null)
+    if (viaCron) {
+      // Tâche planifiée : silencieuse si désactivée, en pause ou sans clé.
+      if (!ctx.settings.enabled || !ctx.settings.scheduled || !Deno.env.get('ANTHROPIC_API_KEY')) return json({ skipped: true })
+      if (action === 'daily_report') {
+        const since = new Date(Date.now() - 24 * 3600000).toISOString()
+        const { count } = await db.from('ai_activity').select('id', { count: 'exact', head: true }).neq('kind', 'llm').gte('created_at', since)
+        if (!count) return json({ skipped: true, reason: 'Aucune activité aujourd’hui.' })
+      }
+    }
     if (!ctx.settings.enabled) return json({ error: 'L’AI Company est en pause (Paramètres IA).' }, 409)
     if (!Deno.env.get('ANTHROPIC_API_KEY')) return json({ error: 'Clé ANTHROPIC_API_KEY absente : ajoutez-la dans Supabase → Edge Functions → Secrets.' }, 412)
 

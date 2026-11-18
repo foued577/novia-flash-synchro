@@ -80,32 +80,20 @@ Tous les utilisateurs ── « Aide et demandes » ─▶ support_requests (cha
 
 Déploiement de la fonction : `supabase functions deploy ai-company --no-verify-jwt` (elle authentifie elle-même l’appelant).
 
-## Travail planifié (facultatif)
+## Travail planifié
 
-Pour que l’organisation travaille sans page ouverte :
+Activé par la migration `20261118000008_ai_schedule.sql` (extensions `pg_cron` et `pg_net`) :
 
-1. Secret Supabase `AI_CRON_SECRET` = une longue valeur aléatoire ; la même valeur dans le Vault : `select vault.create_secret('<valeur>', 'ai_cron_secret');`
-2. Activer les extensions `pg_cron` et `pg_net`, puis :
+| Tâche | Horaire (Paris) | Coût |
+|---|---|---|
+| `ai-company-cycle` | lundi-vendredi, chaque heure de 8 h 10 à 19 h 10 (heure d’hiver) | nul s’il n’y a ni mission prête ni message en attente |
+| `ai-company-report` | lundi-vendredi, 18 h (heure d’hiver) | ignoré s’il n’y a eu aucune activité dans les 24 h |
 
-```sql
-select cron.schedule('ai-company-cycle', '5 7-19 * * 1-5', $$
-  select net.http_post(
-    url := 'https://<ref-projet>.supabase.co/functions/v1/ai-company',
-    headers := jsonb_build_object('Content-Type', 'application/json',
-      'x-ai-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'ai_cron_secret')),
-    body := '{"action":"run_cycle"}'::jsonb)
-$$);
+Les horaires `cron` sont en UTC : en heure d’été, tout est décalé d’une heure plus tard.
 
-select cron.schedule('ai-company-report', '0 17 * * 1-5', $$
-  select net.http_post(
-    url := 'https://<ref-projet>.supabase.co/functions/v1/ai-company',
-    headers := jsonb_build_object('Content-Type', 'application/json',
-      'x-ai-cron-secret', (select decrypted_secret from vault.decrypted_secrets where name = 'ai_cron_secret')),
-    body := '{"action":"daily_report"}'::jsonb)
-$$);
-```
+Authentification : un jeton interne aléatoire (`public.ai_private.cron_token`, lisible uniquement par le serveur) est envoyé par `public.ai_cron_call()` dans l’en-tête `x-ai-cron-secret`. Aucun secret à saisir. Une tâche planifiée ne peut que lancer un cycle ou un rapport ; elle ne fait rien si l’AI Company est en pause, si le travail planifié est désactivé (AI Company → Paramètres IA) ou si la clé Claude est absente.
 
-Les horaires `cron` sont en UTC. Une tâche planifiée ne peut que lancer un cycle ou un rapport : le chat et les validations restent réservés aux administrateurs.
+Pour suspendre : décocher « Travail planifié » dans l’application, ou `select cron.unschedule('ai-company-cycle'); select cron.unschedule('ai-company-report');`.
 
 ## Étendre l’organisation
 
