@@ -7,6 +7,7 @@ import { findMeetingForWeek, sortMeetingsDesc, targetMeetingWeek } from '@/domai
 import type {
   AppSettings,
   AppUser,
+  NewUserInput,
   Attachment,
   Meeting,
   MeetingBundle,
@@ -76,6 +77,8 @@ interface AppState {
   saveTemplates(serviceId: string, templates: SlideTemplate[]): Promise<void>
   saveUser(user: AppUser): Promise<void>
   deleteUser(id: string): Promise<void>
+  createUser(input: NewUserInput): Promise<{ user: AppUser; password: string | null }>
+  resetUserPassword(id: string): Promise<string>
   resetDemo(): Promise<void>
 }
 
@@ -220,7 +223,7 @@ export const useAppStore = create<AppState>((set, get) => {
 
     async signInWithPassword(email, password) {
       const user = await repo().signInWithPassword(email, password)
-      set({ user })
+      set({ user, passwordDialog: repo().consumePasswordSetupRequest() ? 'setup' : null })
       await get().refresh()
       await autoCreate().catch(() => undefined)
     },
@@ -519,6 +522,17 @@ export const useAppStore = create<AppState>((set, get) => {
       } catch (error) {
         notifyError(error)
       }
+    },
+
+    async createUser(input) {
+      const result = await track(() => repo().createUser(input))
+      const snapshot = get().snapshot
+      if (snapshot) set({ snapshot: { ...snapshot, users: [...snapshot.users.filter((u) => u.id !== result.user.id), result.user] } })
+      return result
+    },
+
+    async resetUserPassword(id) {
+      return track(() => repo().resetUserPassword(id))
     },
 
     async deleteUser(id) {

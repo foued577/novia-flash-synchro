@@ -1,4 +1,4 @@
-import type { AppUser, Attachment, MeetingBundle, Slide, Snapshot } from '@/domain/types'
+import type { AppUser, Attachment, MeetingBundle, NewUserInput, Slide, Snapshot } from '@/domain/types'
 import { compressImage, readAsDataUrl } from '@/lib/files'
 import { nowIso, uid } from '@/lib/ids'
 import { generateDemoData } from './demoSeed'
@@ -177,6 +177,19 @@ export class DemoRepository implements DataRepository {
     if (i >= 0) list[i] = { ...user }
     else list.push({ ...user })
     this.persist(true)
+  }
+
+  async createUser(input: NewUserInput) {
+    const email = input.email.trim().toLowerCase()
+    if (this.db.snapshot.users.some((u) => u.email.toLowerCase() === email)) throw new Error('Un compte existe déjà pour cette adresse.')
+    const user: AppUser = { id: uid(), email, fullName: input.fullName.trim(), jobTitle: input.jobTitle.trim(), role: input.role, serviceId: input.role === 'manager' ? input.serviceId : null }
+    this.db.snapshot.users.push(user)
+    this.persist(true)
+    return { user, password: input.mode === 'password' ? 'demo-1234' : null }
+  }
+
+  async resetUserPassword() {
+    return 'demo-1234'
   }
 
   async deleteUser(id: string) {

@@ -1,6 +1,7 @@
 import type {
   AppSettings,
   AppUser,
+  NewUserInput,
   Attachment,
   Meeting,
   MeetingBundle,
@@ -46,6 +47,10 @@ export interface DataRepository {
   saveTemplates(serviceId: string, templates: SlideTemplate[]): Promise<void>
   saveUser(user: AppUser): Promise<void>
   deleteUser(id: string): Promise<void>
+  /** Crée un compte ; renvoie le mot de passe provisoire (mode « password »). */
+  createUser(input: NewUserInput): Promise<{ user: AppUser; password: string | null }>
+  /** Génère un nouveau mot de passe provisoire. */
+  resetUserPassword(id: string): Promise<string>
 
   // Réunions
   loadBundle(meetingId: string): Promise<MeetingBundle>

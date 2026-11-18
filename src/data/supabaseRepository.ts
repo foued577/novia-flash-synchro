@@ -6,6 +6,7 @@ import type {
   Block,
   Meeting,
   MeetingBundle,
+  NewUserInput,
   Service,
   ServiceIcon,
   ServicePalette,
@@ -296,12 +297,14 @@ export class SupabaseRepository implements DataRepository {
   async getCurrentUser() {
     const { data } = await this.client.auth.getSession()
     if (!data.session) return null
+    if (data.session.user.user_metadata?.must_change_password) this.passwordSetup = true
     return this.profile(data.session.user.id)
   }
 
   async signInWithPassword(email: string, password: string) {
     const { data, error } = await this.client.auth.signInWithPassword({ email, password })
     if (error) fail(error, 'Connexion')
+    if (data.user.user_metadata?.must_change_password) this.passwordSetup = true
     const profile = await this.profile(data.user.id)
     if (!profile) throw new Error('Votre compte existe mais aucun profil ne lui est associé. Contactez l’administrateur.')
     return profile
@@ -318,7 +321,7 @@ export class SupabaseRepository implements DataRepository {
   }
 
   async updatePassword(password: string) {
-    const { error } = await this.client.auth.updateUser({ password })
+    const { error } = await this.client.auth.updateUser({ password, data: { must_change_password: false } })
     if (error) {
       if (/should be different/i.test(error.message)) throw new Error('Le nouveau mot de passe doit être différent de l’ancien.')
       if (/at least|weak|short/i.test(error.message)) throw new Error('Mot de passe trop faible : 8 caractères minimum.')
@@ -402,12 +405,38 @@ export class SupabaseRepository implements DataRepository {
       .select('id')
     if (error) fail(error, 'Enregistrement de l’utilisateur')
     if (!data || data.length === 0) {
-      throw new Error('Pour ajouter une personne, invitez-la depuis Supabase (Authentication → Users → Invite) : son profil apparaîtra ici automatiquement.')
+      throw new Error('Profil introuvable : actualisez la page.')
     }
   }
 
-  async deleteUser(): Promise<void> {
-    throw new Error('La suppression d’un compte se fait depuis Supabase (Authentication → Users).')
+  /** Appelle la fonction serveur « admin-users » (clé secrète côté Supabase uniquement). */
+  private async adminUsers<T>(body: Record<string, unknown>): Promise<T> {
+    const { data, error } = await this.client.functions.invoke('admin-users', { body })
+    if (error) {
+      let message = error.message
+      const response = (error as { context?: Response }).context
+      if (response && typeof response.json === 'function') {
+        const payload = await response.json().catch(() => null)
+        if (payload?.error) message = payload.error
+      }
+      if (/Failed to send a request|not found|404/i.test(message)) message = 'La fonction « admin-users » n’est pas déployée sur Supabase.'
+      throw new Error(message)
+    }
+    return data as T
+  }
+
+  async createUser(input: NewUserInput) {
+    const result = await this.adminUsers<{ profile: ProfileRow; password: string | null }>({ action: 'create', ...input, redirectTo: window.location.origin })
+    return { user: toUser(result.profile), password: result.password }
+  }
+
+  async resetUserPassword(id: string) {
+    const result = await this.adminUsers<{ password: string }>({ action: 'reset', userId: id })
+    return result.password
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await this.adminUsers({ action: 'delete', userId: id })
   }
 
   // ----- Réunions ---------------------------------------------------------------

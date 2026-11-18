@@ -207,7 +207,8 @@ Les variables `VITE_*` sont intégrées au moment du build : relancez un build a
 3. **Redéployer** — *Deployments → … → Retry deployment* (les variables ne s’appliquent qu’aux nouveaux builds).
 4. **Supabase → Authentication → URL Configuration** — *Site URL* : l’adresse publique (ex. `https://novia-flash-synchro.pages.dev`) ; *Redirect URLs* : la même suivie de `/**`. Sans cela, les liens d’invitation et de réinitialisation renvoient vers `localhost`.
 5. **Supabase → Authentication → Sign In / Providers** — e-mail activé, *Allow new users to sign up* **désactivé**.
-6. **Comptes** — *Authentication → Users → Invite user* : invitez d’abord l’administrateur (le premier compte devient administrateur). Chaque personne clique le lien reçu, arrive connectée dans l’application et choisit son mot de passe. Ensuite : *Paramètres → Utilisateurs et rôles* dans l’application.
+6. **Comptes** — *Authentication → Users → Invite user* : invitez d’abord l’administrateur (le premier compte devient administrateur). Ensuite, tout se fait dans l’application : *Paramètres → Utilisateurs et rôles → Ajouter un utilisateur* (nom, e-mail, rôle, service). Deux modes : **mot de passe provisoire** affiché à l’administrateur (toujours disponible) ou **invitation par e-mail** (nécessite un serveur SMTP configuré dans Supabase, le service d’envoi par défaut étant limité aux membres de l’équipe Supabase). La personne choisit son mot de passe à la première connexion.
+   Ces actions passent par la fonction Edge `supabase/functions/admin-users` (déploiement : `supabase functions deploy admin-users --no-verify-jwt` — elle vérifie elle-même que l’appelant est administrateur).
 7. **Données de démonstration** — si `demo-data.sql` a été exécuté, lancez `supabase/reset-demo-data.sql` avant la mise en service.
 
 Dans l’application : *Mot de passe oublié ?* sur l’écran de connexion, *Changer mon mot de passe* dans le menu du compte (en bas de la barre latérale).

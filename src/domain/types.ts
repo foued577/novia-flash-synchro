@@ -46,6 +46,16 @@ export interface AppUser {
   jobTitle: string
 }
 
+export interface NewUserInput {
+  email: string
+  fullName: string
+  jobTitle: string
+  role: Role
+  serviceId: string | null
+  /** password : mot de passe provisoire affiché à l'administrateur ; invite : e-mail d'invitation. */
+  mode: 'password' | 'invite'
+}
+
 export interface AppSettings {
   orgName: string
   tagline: string

@@ -1,7 +1,8 @@
 import { clsx } from 'clsx'
-import { ArrowDown, ArrowUp, Database, Download, Plus, RefreshCcw, Trash2, Upload, X } from 'lucide-react'
+import { ArrowDown, ArrowUp, Database, Download, KeyRound, Plus, RefreshCcw, Trash2, Upload, UserPlus, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { AddUserDialog, CredentialsDialog, type Credentials } from '@/components/settings/UserDialogs'
 import { Button, IconButton } from '@/components/ui/Button'
 import { confirmAction } from '@/components/ui/Dialog'
 import { Field, Select, Stepper, Switch } from '@/components/ui/Form'
@@ -257,7 +258,10 @@ function UsersSettings() {
   const services = useServices()
   const saveUser = useAppStore((s) => s.saveUser)
   const deleteUser = useAppStore((s) => s.deleteUser)
+  const resetUserPassword = useAppStore((s) => s.resetUserPassword)
   const current = useAppStore((s) => s.user)
+  const [adding, setAdding] = useState(false)
+  const [credentials, setCredentials] = useState<Credentials | null>(null)
   const update = (u: AppUser, patch: Partial<AppUser>) => void saveUser({ ...u, ...patch, serviceId: (patch.role ?? u.role) === 'manager' ? (patch.serviceId !== undefined ? patch.serviceId : u.serviceId) : null })
 
   return (
@@ -313,13 +317,30 @@ function UsersSettings() {
                     ))}
                   </Select>
                 </td>
-                <td className="px-4 py-2 text-right">
+                <td className="px-4 py-2 text-right whitespace-nowrap">
+                  {u.id !== current?.id && env.dataMode === 'supabase' && (
+                    <IconButton
+                      icon={KeyRound}
+                      label={`Nouveau mot de passe provisoire pour ${u.fullName}`}
+                      title="Nouveau mot de passe provisoire"
+                      onClick={async () => {
+                        const ok = await confirmAction({ title: `Réinitialiser le mot de passe de ${u.fullName} ?`, message: 'Son mot de passe actuel cessera de fonctionner. Un mot de passe provisoire vous sera affiché.', confirmLabel: 'Réinitialiser' })
+                        if (!ok) return
+                        try {
+                          const password = await resetUserPassword(u.id)
+                          setCredentials({ fullName: u.fullName, email: u.email, password })
+                        } catch (err) {
+                          toast.error(err instanceof Error ? err.message : 'Réinitialisation impossible')
+                        }
+                      }}
+                    />
+                  )}
                   {u.id !== current?.id && (
                     <IconButton
                       icon={Trash2}
                       label={`Supprimer ${u.fullName}`}
                       onClick={async () => {
-                        const ok = await confirmAction({ title: `Supprimer ${u.fullName} ?`, message: 'Cette personne n’aura plus accès à l’application.', confirmLabel: 'Supprimer', danger: true })
+                        const ok = await confirmAction({ title: `Supprimer ${u.fullName} ?`, message: 'Son compte est supprimé : elle n’aura plus accès à l’application. Ses contenus déjà saisis sont conservés.', confirmLabel: 'Supprimer', danger: true })
                         if (ok) await deleteUser(u.id)
                       }}
                     />
@@ -330,13 +351,11 @@ function UsersSettings() {
           </tbody>
         </table>
       </section>
-      {env.dataMode === 'demo' ? (
-        <Button icon={Plus} onClick={() => saveUser({ id: uid(), fullName: 'Nouvelle personne', email: `utilisateur${users.length + 1}@demo-novia.fr`, role: 'viewer', serviceId: null, jobTitle: 'Collaborateur' })}>
-          Ajouter une personne
-        </Button>
-      ) : (
-        <p className="text-sm text-ink-2">Pour ajouter une personne, invitez-la depuis Supabase (Authentication → Users → Invite user) : son profil apparaît ici dès sa première connexion, avec le rôle « Collaborateur ».</p>
-      )}
+      <Button variant="primary" icon={UserPlus} onClick={() => setAdding(true)}>
+        Ajouter un utilisateur
+      </Button>
+      <AddUserDialog open={adding} onClose={() => setAdding(false)} onCreated={setCredentials} />
+      <CredentialsDialog credentials={credentials} onClose={() => setCredentials(null)} />
     </div>
   )
 }
